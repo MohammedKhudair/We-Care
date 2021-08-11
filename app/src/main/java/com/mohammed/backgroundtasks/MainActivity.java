@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 if (days != 0) {
-                    weeklyAverageTextView.setText("" + allTimesNotified / (days - 1)); // I know  i cane organize this with a resource string 😁
+                    weeklyAverageTextView.setText("" + allTimesNotified / days ); // I know  i cane organize this with a resource string 😁
                 }
             }
         });

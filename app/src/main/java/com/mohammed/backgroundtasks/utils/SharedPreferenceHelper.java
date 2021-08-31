@@ -8,6 +8,8 @@ import androidx.preference.PreferenceManager;
 
 public class SharedPreferenceHelper {
     private static final String PREF_TIMES_NOTIFIED_TODAY = "TimesNotifiedToday";
+    private static final String SCREEN_STATE = "SCREEN_STATE";
+
 
     //=======================================================================
     // Save times notified today
@@ -28,5 +30,19 @@ public class SharedPreferenceHelper {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         sp.edit().remove(PREF_TIMES_NOTIFIED_TODAY).apply();
     }
+
+    //=======================================================================
+    // Save screen state
+    //======================================================================
+
+    public static void screenState(Context context,boolean screenState) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        sp.edit().putBoolean(SCREEN_STATE,screenState).apply();
+    }
+    public static boolean getScreenState(Context context) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        return sp.getBoolean(SCREEN_STATE,true);
+    }
+
 
 }

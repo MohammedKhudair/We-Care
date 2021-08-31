@@ -1,6 +1,8 @@
 package com.mohammed.backgroundtasks.backgroundTasks;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 
 import androidx.annotation.NonNull;
 import androidx.work.ListenableWorker;
@@ -21,15 +23,25 @@ public class NotificationWorker extends Worker {
     @NonNull
     @Override
     public ListenableWorker.Result doWork() {
-        // Show the notification
-        NotificationUtils.deliverNotification(getApplicationContext());
 
-        // Save data in the database
-        UserRepository mRepository = new UserRepository(getApplicationContext());
-        mRepository.addUserTimesNotificationToday(new UserTimesNotificationToday(1));
+        boolean screenState = SharedPreferenceHelper.getScreenState(getApplicationContext());
 
-        // Save times notified in a SharedPreference
-        SharedPreferenceHelper.saveTimesNotifiedToday(getApplicationContext());
+        if (screenState) {
+            // Show the notification
+            NotificationUtils.deliverNotification(getApplicationContext());
+
+            // Save data in the database
+            UserRepository mRepository = new UserRepository(getApplicationContext());
+            mRepository.addUserTimesNotificationToday(new UserTimesNotificationToday(1));
+
+            // Save times notified in a SharedPreference
+            SharedPreferenceHelper.saveTimesNotifiedToday(getApplicationContext());
+
+        } else {
+            SyncWork syncWork = new SyncWork();
+            syncWork.cancelWork(getApplicationContext());
+        }
+
         return Result.success();
     }
 }

@@ -2,17 +2,22 @@ package com.mohammed.backgroundtasks;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Constraints;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.mohammed.backgroundtasks.backgroundTasks.CustomReceiver;
+import com.mohammed.backgroundtasks.backgroundTasks.SyncWork;
 import com.mohammed.backgroundtasks.utils.NotificationUtils;
 import com.mohammed.backgroundtasks.backgroundTasks.NotificationWorker;
 import com.mohammed.backgroundtasks.backgroundTasks.SyncDataWorker;
@@ -23,9 +28,11 @@ import com.mohammed.backgroundtasks.viewModel.UserViewModel;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
-
     TextView todayAlertsTextView;
     TextView weeklyAverageTextView;
+
+    SyncWork syncWork = new SyncWork();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,51 +71,29 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 if (days != 0) {
-                    weeklyAverageTextView.setText("" + allTimesNotified / days ); // I know  i cane organize this with a resource string 😁
+                    weeklyAverageTextView.setText("" + allTimesNotified / days); // I know  i cane organize this with a resource string 😁
                 }
             }
         });
 
+        // Register BroadcastReceiver to notice screen state
+        registerReceiver();
 
-        scheduleWork(); // schedule work times notified today
-        scheduleWorkSync(); // Sync work after 24 hours
+        syncWork.scheduleWork(this); // schedule work times notified today
+        syncWork.scheduleWorkSync(this); // Sync work after 24 hours
     }
 
+    private void registerReceiver() {
+        CustomReceiver mReceiver = new CustomReceiver();
 
-    private void scheduleWork() {
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_SCREEN_ON);
+        filter.addAction(Intent.ACTION_SCREEN_OFF);
 
-        Constraints constraints = new Constraints.Builder()
-                .setRequiresDeviceIdle(false)
-                .build();
-
-        PeriodicWorkRequest workRequest =
-                new PeriodicWorkRequest.Builder(NotificationWorker.class, 25, TimeUnit.MINUTES)
-                        .setConstraints(constraints)
-                        .setInitialDelay(25, TimeUnit.MINUTES)
-                        .build();
-
-        WorkManager workManager = WorkManager.getInstance(this);
-        workManager.enqueueUniquePeriodicWork(
-                "NotificationWorker",
-                ExistingPeriodicWorkPolicy.KEEP,
-                workRequest);
-    }
-
-    private void scheduleWorkSync() {
-        PeriodicWorkRequest workRequest =
-                new PeriodicWorkRequest.Builder(SyncDataWorker.class, 24, TimeUnit.HOURS)
-                        .setInitialDelay(24, TimeUnit.HOURS)
-                        .build();
-
-        WorkManager workManager = WorkManager.getInstance(this);
-        workManager.enqueueUniquePeriodicWork(
-                "SyncDataWorker",
-                ExistingPeriodicWorkPolicy.KEEP,
-                workRequest);
+        this.registerReceiver(mReceiver, filter);
     }
 
     public void showDailyData(View view) {
         startActivity(new Intent(MainActivity.this, DataDailyActivity.class));
     }
-
 }
